@@ -1,0 +1,16 @@
+# Generated Qoder Sites descriptor (contains signed URLs and project/site IDs)
+*.qoder.site
+
+# Local dev logs
+dev/server.log
+*.log
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
+# Local editor/workspace state
+.qoder/

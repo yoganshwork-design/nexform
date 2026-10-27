@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>NexForm — AI Health & Performance OS</title>
+  <meta name="description" content="A majestic AI-powered health, nutrition and training platform. Track meals, scan food links, and get accurate calorie burn — personalized for every user.">
+  <meta name="theme-color" content="#80dfff">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="bg-wash"></div>
+  <canvas id="aurora-canvas"></canvas>
+  <div class="bg-grain"></div>
+  <div id="magnet-cursor"></div>
+  <div id="cursor-dot"></div>
+
+  <!-- ============ AUTH / ONBOARDING GATE ============ -->
+  <div class="gate" id="gate">
+    <div class="gate-card">
+      <div class="brand-mark" style="margin:0 auto 4px; width:60px;height:60px;font-size:1.8rem;">N</div>
+
+      <!-- Sign-in step -->
+      <div id="gate-signin">
+        <h2>Welcome to <span class="grad-text">NexForm</span></h2>
+        <p>Your AI health and performance operating system. New here or returning — continue with your Qoder account to sync your nutrition, training and progress across every device.</p>
+        <div class="auth-choices">
+          <a class="btn btn-aqua btn-lg" href="/__qoder_auth/start?return_path=%2F">
+            <i data-lucide="log-in"></i> Sign in
+          </a>
+          <a class="btn btn-volt btn-lg" href="/__qoder_auth/start?return_path=%2F">
+            <i data-lucide="user-plus"></i> Sign up
+          </a>
+        </div>
+        <p class="small muted" style="margin-top:18px;">Both use Qoder's secure login. First time here? Choose <b>Sign up</b> to create your account — then we'll ask for your details, goals and preferences and build your personalised plan. Each account gets its own private profile, targets and history.</p>
+      </div>
+
+      <!-- Onboarding step -->
+      <div id="gate-onboard" class="hidden">
+        <div class="step-dots" id="ob-dots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+        <h2 id="ob-title">Let's build your profile</h2>
+        <p id="ob-sub" class="small">These details power your calorie targets and accurate AI burn estimates.</p>
+
+        <form id="onboard-form" style="text-align:left;">
+          <!-- Step 0: Basics -->
+          <div class="ob-step" data-step="0">
+            <div class="onboard-grid">
+              <div class="field"><label>Display name</label><input class="input" id="ob-name" placeholder="Your name" required></div>
+              <div class="field"><label>Age</label><input class="input" type="number" id="ob-age" min="10" max="100" placeholder="26" required></div>
+              <div class="field"><label>Sex</label>
+                <select class="input" id="ob-gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>
+              </div>
+              <div class="field"><label>Height (cm)</label><input class="input" type="number" id="ob-height" min="100" max="250" placeholder="175" required></div>
+            </div>
+          </div>
+
+          <!-- Step 1: Body & goal -->
+          <div class="ob-step hidden" data-step="1">
+            <div class="onboard-grid">
+              <div class="field"><label>Current weight (kg)</label><input class="input" type="number" step="0.1" id="ob-weight" min="30" max="300" placeholder="85" required></div>
+              <div class="field"><label>Target weight (kg)</label><input class="input" type="number" step="0.1" id="ob-target" min="30" max="300" placeholder="78" required></div>
+              <div class="field"><label>Body fat % <span class="opt">optional</span></label><input class="input" type="number" step="0.1" id="ob-bodyfat" min="3" max="70" placeholder="23"></div>
+              <div class="field"><label>Primary goal</label>
+                <select class="input" id="ob-goal">
+                  <option value="cut">Fat loss (deficit)</option>
+                  <option value="recomp" selected>Body recomposition</option>
+                  <option value="bulk">Muscle gain (surplus)</option>
+                  <option value="maintain">Maintain weight</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Training & activity -->
+          <div class="ob-step hidden" data-step="2">
+            <div class="onboard-grid">
+              <div class="field"><label>Activity level</label>
+                <select class="input" id="ob-activity">
+                  <option value="1.2">Sedentary (desk job)</option>
+                  <option value="1.375">Light (1-3 days/wk)</option>
+                  <option value="1.55" selected>Moderate (3-5 days/wk)</option>
+                  <option value="1.725">Very active (6-7 days/wk)</option>
+                  <option value="1.9">Athlete (2x/day)</option>
+                </select>
+              </div>
+              <div class="field"><label>Training days / week <span class="opt">optional</span></label><input class="input" type="number" id="ob-traindays" min="0" max="14" placeholder="4"></div>
+              <div class="field"><label>Training type <span class="opt">optional</span></label>
+                <select class="input" id="ob-traintype">
+                  <option value="">Prefer not to say</option>
+                  <option value="strength">Strength / weights</option>
+                  <option value="cardio">Cardio / endurance</option>
+                  <option value="mixed">Mixed (strength + cardio)</option>
+                  <option value="sports">Sport-specific</option>
+                  <option value="calisthenics">Calisthenics / bodyweight</option>
+                  <option value="none">None currently</option>
+                </select>
+              </div>
+              <div class="field"><label>Occupation activity <span class="opt">optional</span></label>
+                <select class="input" id="ob-occupation">
+                  <option value="">Prefer not to say</option>
+                  <option value="sedentary">Mostly sitting</option>
+                  <option value="light">Mixed sitting/standing</option>
+                  <option value="active">On my feet often</option>
+                  <option value="very_active">Physical / manual labour</option>
+                </select>
+              </div>
+              <div class="field"><label>Avg daily steps <span class="opt">optional</span></label><input class="input" type="number" id="ob-steps" min="0" max="40000" placeholder="7000"></div>
+            </div>
+          </div>
+
+          <!-- Step 3: Recovery & habits -->
+          <div class="ob-step hidden" data-step="3">
+            <div class="onboard-grid">
+              <div class="field"><label>Sleep (hours/night) <span class="opt">optional</span></label><input class="input" type="number" step="0.5" id="ob-sleep" min="0" max="14" placeholder="7"></div>
+              <div class="field"><label>Stress level <span class="opt">optional</span></label>
+                <select class="input" id="ob-stress">
+                  <option value="">Prefer not to say</option>
+                  <option value="low">Low</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="high">High</option>
+                  <option value="very_high">Very high</option>
+                </select>
+              </div>
+              <div class="field"><label>Alcohol <span class="opt">optional</span></label>
+                <select class="input" id="ob-alcohol">
+                  <option value="">Prefer not to say</option>
+                  <option value="none">Rarely / never</option>
+                  <option value="occasional">Occasional (1-2/wk)</option>
+                  <option value="weekly">Weekly social</option>
+                  <option value="daily">Most days</option>
+                </select>
+              </div>
+              <div class="field"><label>Caffeine <span class="opt">optional</span></label>
+                <select class="input" id="ob-caffeine">
+                  <option value="">Prefer not to say</option>
+                  <option value="none">None</option>
+                  <option value="moderate">1-2 cups/day</option>
+                  <option value="high">3+ cups/day</option>
+                </select>
+              </div>
+              <div class="field"><label>Smoking <span class="opt">optional</span></label>
+                <select class="input" id="ob-smoking">
+                  <option value="">Prefer not to say</option>
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4: Diet & health -->
+          <div class="ob-step hidden" data-step="4">
+            <div class="onboard-grid">
+              <div class="field"><label>Dietary preference <span class="opt">optional</span></label><input class="input" id="ob-diet" placeholder="e.g. vegetarian, halal, keto..."></div>
+              <div class="field"><label>Meals per day <span class="opt">optional</span></label><input class="input" type="number" id="ob-meals" min="1" max="8" placeholder="3"></div>
+              <div class="field"><label>Allergies <span class="opt">optional</span></label><input class="input" id="ob-allergies" placeholder="e.g. peanuts, shellfish"></div>
+              <div class="field"><label>Intolerances <span class="opt">optional</span></label><input class="input" id="ob-intolerances" placeholder="e.g. lactose, gluten"></div>
+              <div class="field"><label>Foods you avoid <span class="opt">optional</span></label><input class="input" id="ob-avoid" placeholder="e.g. beef, dairy"></div>
+              <div class="field"><label>Medical conditions <span class="opt">optional</span></label><input class="input" id="ob-conditions" placeholder="e.g. diabetes, thyroid, PCOS"></div>
+              <div class="field"><label>Medications <span class="opt">optional</span></label><input class="input" id="ob-medications" placeholder="e.g. metformin"></div>
+              <div class="field"><label>Injuries limiting training <span class="opt">optional</span></label><input class="input" id="ob-injuries" placeholder="e.g. lower back, knee"></div>
+              <div class="field"><label>Supplements <span class="opt">optional</span></label><input class="input" id="ob-supplements" placeholder="e.g. whey, creatine"></div>
+              <div class="field"><label>Menstrual cycle <span class="opt">optional</span></label>
+                <select class="input" id="ob-cycle">
+                  <option value="">Not applicable</option>
+                  <option value="regular">Regular</option>
+                  <option value="irregular">Irregular</option>
+                  <option value="pcos">PCOS</option>
+                  <option value="menopause">Menopause</option>
+                </select>
+              </div>
+              <div class="field"><label>Goal timeline (weeks) <span class="opt">optional</span></label><input class="input" type="number" id="ob-timeline" min="1" max="104" placeholder="12"></div>
+            </div>
+          </div>
+
+          <!-- Step 5: Preview -->
+          <div class="ob-step hidden" data-step="5">
+            <div class="ai-result" id="ob-preview"></div>
+          </div>
+
+          <div class="modal-actions" style="justify-content:space-between;">
+            <button type="button" class="btn btn-ghost btn-sm hidden" id="ob-back"><i data-lucide="arrow-left"></i> Back</button>
+            <button type="button" class="btn btn-aqua" id="ob-next">Continue <i data-lucide="arrow-right"></i></button>
+            <button type="submit" class="btn btn-volt hidden" id="ob-submit"><i data-lucide="sparkles"></i> Start tracking</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="gate-loading" class="hidden">
+        <div class="spinner" style="width:34px;height:34px;margin:20px auto;"></div>
+        <p class="muted">Loading your profile…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HEADER ============ -->
+  <header id="site-header" class="hidden">
+    <div class="brand">
+      <div class="brand-mark">N</div>
+      <div>
+        <div class="brand-name">NexForm</div>
+        <div class="brand-tag">Health OS</div>
+      </div>
+    </div>
+    <div class="hud">
+      <div class="hud-chip hide-sm"><span class="lbl">Left</span> <span id="hud-cal" style="color:var(--aqua-ink)">—</span></div>
+      <div class="hud-chip hide-sm"><span class="lbl">Protein</span> <span id="hud-prot" style="color:#2563eb">—</span></div>
+      <div class="hud-chip"><span class="lbl">Burned</span> <span id="hud-burn" style="color:var(--warn)">—</span></div>
+      <div class="hud-user" id="hud-user" title="Your profile">
+        <span class="avatar-fallback" id="hud-avatar">•</span>
+        <span id="hud-username">You</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ MAIN ============ -->
+  <div id="app" class="hidden">
+    <section class="hero wrap">
+      <div class="hero-eyebrow"><span class="pulse"></span> <span id="hero-greeting">Your day, illuminated</span></div>
+      <h1 class="hero-title">
+        <span class="line"><span class="word" style="animation-delay:.05s">Every</span> <span class="word grad-text" style="animation-delay:.12s">calorie</span></span>
+        <span class="line"><span class="volt-text" style="animation-delay:.2s">counts.</span></span>
+      </h1>
+      <p class="hero-sub">AI-powered nutrition tracking, instant food-link scanning and training-day burn estimates — engineered around your body, your goals, your day.</p>
+      <div class="hero-cta">
+        <button class="btn btn-volt btn-lg" data-goto="nutrition-tab"><i data-lucide="utensils"></i> Log a meal</button>
+        <button class="btn btn-ghost btn-lg" data-goto="exercise-tab"><i data-lucide="dumbbell"></i> Today's workout</button>
+      </div>
+    </section>
+
+    <nav class="nav-bar wrap" id="nav-bar">
+      <button class="nav-pill active" data-tab="dashboard-tab"><i data-lucide="layout-dashboard"></i> Dashboard</button>
+      <button class="nav-pill" data-tab="nutrition-tab"><i data-lucide="utensils"></i> Nutrition</button>
+      <button class="nav-pill" data-tab="exercise-tab"><i data-lucide="dumbbell"></i> Training</button>
+      <button class="nav-pill" data-tab="progress-tab"><i data-lucide="camera"></i> Progress</button>
+      <button class="nav-pill" data-tab="analytics-tab"><i data-lucide="line-chart"></i> Analytics</button>
+      <button class="nav-pill" data-tab="coach-tab"><i data-lucide="bot"></i> AI Coach</button>
+    </nav>
+
+    <main class="wrap section">
+
+      <!-- ===== DASHBOARD ===== -->
+      <section id="dashboard-tab" class="tab-pane active">
+        <div class="panel reveal">
+          <div class="panel-title"><i data-lucide="target"></i> Today's Macro Rings <span class="tag" id="dash-date"></span></div>
+          <div class="grid grid-4">
+            <div class="ring-card">
+              <div class="ring-wrap">
+                <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-val" id="ring-cal" cx="60" cy="60" r="52" stroke="#ef4444"></circle></svg>
+                <div class="ring-center"><span class="ring-num" id="val-cal" style="color:#ef4444">0</span><span class="ring-sub" id="sub-cal">kcal</span></div>
+              </div>
+              <div class="ring-label">Calories</div>
+            </div>
+            <div class="ring-card">
+              <div class="ring-wrap">
+                <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-val" id="ring-prot" cx="60" cy="60" r="52" stroke="#2563eb"></circle></svg>
+                <div class="ring-center"><span class="ring-num" id="val-prot" style="color:#2563eb">0g</span><span class="ring-sub" id="sub-prot">goal</span></div>
+              </div>
+              <div class="ring-label">Protein</div>
+            </div>
+            <div class="ring-card">
+              <div class="ring-wrap">
+                <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-val" id="ring-carbs" cx="60" cy="60" r="52" stroke="#10b981"></circle></svg>
+                <div class="ring-center"><span class="ring-num" id="val-carbs" style="color:#10b981">0g</span><span class="ring-sub" id="sub-carbs">goal</span></div>
+              </div>
+              <div class="ring-label">Carbs</div>
+            </div>
+            <div class="ring-card">
+              <div class="ring-wrap">
+                <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-val" id="ring-fat" cx="60" cy="60" r="52" stroke="#f59e0b"></circle></svg>
+                <div class="ring-center"><span class="ring-num" id="val-fat" style="color:#f59e0b">0g</span><span class="ring-sub" id="sub-fat">goal</span></div>
+              </div>
+              <div class="ring-label">Fats</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-2 mt">
+          <div class="panel reveal">
+            <div class="panel-title"><i data-lucide="scale"></i> Energy Balance</div>
+            <div class="stat-row">
+              <div class="stat"><div class="k">Food intake</div><div class="v" id="net-cal">0</div></div>
+              <div class="stat"><div class="k">Vs maintenance</div><div class="v" id="net-deficit" style="color:var(--pos)">0</div></div>
+            </div>
+            <p class="small muted center mt" id="balance-note">Log meals and workouts to see your balance.</p>
+          </div>
+          <div class="panel reveal">
+            <div class="panel-title"><i data-lucide="droplet"></i> Hydration</div>
+            <div class="row" style="gap:20px;">
+              <div class="glass-tube"><div class="fill" id="water-fill" style="height:0%"></div></div>
+              <div style="flex:1;">
+                <div class="kbd" style="font-size:1.3rem;" id="water-val">0 / 3000 ml</div>
+                <div class="row mt" style="gap:8px;">
+                  <button class="btn btn-aqua btn-sm" id="btn-water-add">+ 250ml</button>
+                  <button class="btn btn-ghost btn-sm" id="btn-water-sub">− 250ml</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel reveal mt">
+          <div class="panel-title"><i data-lucide="sparkles"></i> Quick add</div>
+          <div class="row wrap-flex" style="gap:10px;">
+            <button class="btn btn-ghost btn-sm" data-goto="nutrition-tab" data-scroll="custom-food"><i data-lucide="edit-3"></i> Describe a meal (AI)</button>
+            <button class="btn btn-ghost btn-sm" data-goto="nutrition-tab" data-scroll="food-url"><i data-lucide="link"></i> Paste a food link</button>
+            <button class="btn btn-ghost btn-sm" data-goto="exercise-tab"><i data-lucide="plus-circle"></i> Log a workout</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== NUTRITION ===== -->
+      <section id="nutrition-tab" class="tab-pane">
+        <div class="grid grid-2">
+          <!-- Custom AI food input -->
+          <div class="panel reveal" id="custom-food">
+            <div class="panel-title"><i data-lucide="wand-2"></i> Describe what you ate <span class="tag">AI</span></div>
+            <p class="small muted mb">Type your meal in plain words and how much — NexForm's AI calculates the calories and macros for you. You never enter numbers.</p>
+            <div class="field"><label>What did you eat?</label>
+              <textarea class="input" id="ai-food-text" placeholder="e.g. 2 egg bhurji with butter, 1 medium roti, and a cup of sweet chai"></textarea>
+            </div>
+            <div class="field mt"><label>Meal</label>
+              <select class="input" id="ai-food-cat"><option>Breakfast</option><option>Lunch</option><option>Snack</option><option>Dinner</option></select>
+            </div>
+            <button class="btn btn-volt mt" id="btn-ai-food" style="width:100%;"><i data-lucide="sparkles"></i> Calculate with AI</button>
+            <div id="ai-food-status" class="small mt" style="color:var(--aqua-ink);font-weight:700;"></div>
+            <div id="ai-food-result"></div>
+          </div>
+
+          <!-- Food URL -->
+          <div class="panel reveal" id="food-url">
+            <div class="panel-title"><i data-lucide="link"></i> Food order link <span class="tag">AI</span></div>
+            <p class="small muted mb">Ordered in? Paste the item link (Swiggy, Zomato, restaurant menu…). NexForm reads it and estimates calories & macros.</p>
+            <div class="field"><label>Order URL or dish name</label>
+              <input class="input" id="ai-url-text" placeholder="https://… or 'Double chicken kathi roll'">
+            </div>
+            <button class="btn btn-aqua mt" id="btn-ai-url" style="width:100%;"><i data-lucide="scan-line"></i> Analyze link with AI</button>
+            <div id="ai-url-status" class="small mt" style="color:var(--aqua-ink);font-weight:700;"></div>
+            <div id="ai-url-result"></div>
+          </div>
+        </div>
+
+        <!-- Catalog -->
+        <div class="panel reveal mt">
+          <div class="row between wrap-flex" style="gap:12px;margin-bottom:14px;">
+            <div class="panel-title" style="margin:0;"><i data-lucide="utensils"></i> Meal catalog</div>
+            <input class="input" id="food-search" placeholder="Search dishes…" style="width:240px;">
+          </div>
+          <div class="row wrap-flex" id="food-cats" style="gap:8px;margin-bottom:18px;"></div>
+          <div class="grid grid-3" id="food-grid"></div>
+        </div>
+
+        <!-- Logged today -->
+        <div class="panel reveal mt">
+          <div class="panel-title"><i data-lucide="clipboard-list"></i> Logged today <span class="tag" id="meal-count-tag">0</span></div>
+          <div id="logged-meals"></div>
+        </div>
+      </section>
+
+      <!-- ===== TRAINING ===== -->
+      <section id="exercise-tab" class="tab-pane">
+        <div class="panel reveal">
+          <div class="row between wrap-flex" style="gap:12px;margin-bottom:16px;">
+            <div class="panel-title" style="margin:0;"><i data-lucide="dumbbell"></i> Your training split</div>
+            <span class="ai-badge"><span class="dot"></span> AI burn estimates</span>
+          </div>
+          <div class="day-tabs" id="day-tabs"></div>
+          <div class="card mt" style="margin-bottom:18px;">
+            <div class="kbd" id="split-title" style="font-size:1.15rem;color:var(--aqua-ink);">Day</div>
+            <div class="small muted" id="split-note" style="margin-top:4px;"></div>
+          </div>
+          <div id="split-list"></div>
+          <button class="btn btn-ghost btn-sm mt" id="btn-add-exercise"><i data-lucide="plus"></i> Add / replace an exercise</button>
+        </div>
+
+        <div id="rest-timer-slot" class="mt hidden">
+          <div class="rest-timer">
+            <div class="row" style="gap:16px;">
+              <div class="rest-ring">
+                <svg viewBox="0 0 80 80"><circle class="ring-bg" cx="40" cy="40" r="34" stroke-width="7"></circle><circle class="ring-val" id="rest-ring-val" cx="40" cy="40" r="34" stroke-width="7" stroke="var(--aqua-ink)"></circle></svg>
+                <div class="rt-num" id="rest-num">90</div>
+              </div>
+              <div><div class="kbd" style="font-size:1.1rem;">Rest timer</div><div class="small muted">Recover, then hit the next set.</div></div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btn-rest-stop">Dismiss</button>
+          </div>
+        </div>
+
+        <div class="grid grid-2 mt">
+          <div class="panel reveal">
+            <div class="panel-title"><i data-lucide="zap"></i> Log cardio / custom session</div>
+            <div class="field"><label>Activity</label>
+              <input class="input" id="cardio-name" placeholder="e.g. Incline treadmill walk, cycling, swimming…">
+            </div>
+            <div class="field mt"><label>Duration (minutes)</label>
+              <input class="input" type="number" id="cardio-mins" value="25" min="1" max="600">
+            </div>
+            <div class="field mt"><label>Intensity (optional)</label>
+              <select class="input" id="cardio-intensity"><option value="light">Light</option><option value="moderate" selected>Moderate</option><option value="vigorous">Vigorous</option></select>
+            </div>
+            <button class="btn btn-aqua mt" id="btn-log-cardio" style="width:100%;"><i data-lucide="flame"></i> Estimate burn with AI</button>
+            <div id="cardio-status" class="small mt" style="color:var(--aqua-ink);font-weight:700;"></div>
+          </div>
+
+          <div class="panel reveal">
+            <div class="panel-title"><i data-lucide="check-circle-2"></i> Completed today <span class="tag" id="burn-total-tag">0 kcal</span></div>
+            <div id="logged-workouts"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PROGRESS ===== -->
+      <section id="progress-tab" class="tab-pane">
+        <div class="panel reveal">
+          <div class="panel-title"><i data-lucide="split"></i> Visual comparison</div>
+          <div class="row wrap-flex" style="gap:14px;margin-bottom:16px;">
+            <div class="field" style="flex:1;min-width:180px;"><label>Photo A</label><select class="input" id="comp-a"></select></div>
+            <div class="field" style="flex:1;min-width:180px;"><label>Photo B</label><select class="input" id="comp-b"></select></div>
+          </div>
+          <div class="compare" id="compare">
+            <img id="comp-img-a" alt="Before">
+            <div class="after-wrap" id="comp-after-wrap"><img id="comp-img-b" alt="After"></div>
+            <div class="handle" id="comp-handle"><div class="knob">↔</div></div>
+          </div>
+        </div>
+
+        <div class="grid grid-2 mt">
+          <div class="panel reveal">
+            <div class="panel-title"><i data-lucide="scale"></i> Log weight</div>
+            <div class="onboard-grid">
+              <div class="field"><label>Date</label><input class="input" type="date" id="w-date"></div>
+              <div class="field"><label>Weight (kg)</label><input class="input" type="number" step="0.1" id="w-val"></div>
+              <div class="field"><label>Body fat % (optional)</label><input class="input" type="number" step="0.1" id="w-bf"></div>
+            </div>
+            <button class="btn btn-volt mt" id="btn-save-weight" style="width:100%;">Save entry</button>
+          </div>
+          <div class="panel reveal">
+            <div class="panel-title"><i data-lucide="image"></i> Progress photo</div>
+            <div class="field"><label>Pose</label>
+              <select class="input" id="photo-tag"><option>Front</option><option>Side</option><option>Back</option></select>
+            </div>
+            <input type="file" id="photo-file" accept="image/*" class="hidden">
+            <button class="btn btn-ghost mt" id="btn-photo" style="width:100%;"><i data-lucide="upload-cloud"></i> Upload photo</button>
+            <p class="small muted mt">Photos are stored on this device for private comparison.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-2 mt">
+          <div class="panel reveal"><div class="panel-title"><i data-lucide="list"></i> Weight history</div><div id="weight-history"></div></div>
+          <div class="panel reveal"><div class="panel-title"><i data-lucide="grid-2x2"></i> Photo gallery</div><div class="grid grid-2" id="photo-gallery"></div></div>
+        </div>
+      </section>
+
+      <!-- ===== ANALYTICS ===== -->
+      <section id="analytics-tab" class="tab-pane">
+        <div class="row" style="justify-content:flex-end;gap:8px;margin-bottom:16px;" id="range-btns">
+          <button class="cat-chip active" data-range="7">7 days</button>
+          <button class="cat-chip" data-range="14">14 days</button>
+          <button class="cat-chip" data-range="30">30 days</button>
+        </div>
+        <div class="panel reveal"><div class="panel-title"><i data-lucide="bar-chart-2"></i> Intake trends</div><div class="chart-frame"><canvas id="chart-nutrition"></canvas></div></div>
+        <div class="panel reveal mt"><div class="panel-title"><i data-lucide="flame"></i> Burn trends</div><div class="chart-frame"><canvas id="chart-burn"></canvas></div></div>
+        <div class="panel reveal mt"><div class="panel-title"><i data-lucide="trending-down"></i> Weight curve</div><div class="chart-frame"><canvas id="chart-weight"></canvas></div></div>
+      </section>
+
+      <!-- ===== AI COACH ===== -->
+      <section id="coach-tab" class="tab-pane">
+        <div class="panel reveal">
+          <div class="panel-title"><i data-lucide="bot"></i> Nex AI Coach <span class="tag">Context-aware</span> <span class="ai-credit" id="ai-credit" title="AI credits left today"></span></div>
+          <div class="row wrap-flex" style="gap:8px;margin-bottom:16px;" id="coach-prompts">
+            <button class="cat-chip" data-p="Analyze my day so far and tell me what to fix">Analyze my day</button>
+            <button class="cat-chip" data-p="Recommend a high-protein dinner for my goals">Dinner ideas</button>
+            <button class="cat-chip" data-p="How do I break a fat-loss plateau?">Break a plateau</button>
+            <button class="cat-chip" data-p="Give me form tips for my next lift">Form tips</button>
+          </div>
+          <div class="chat-box">
+            <div class="chat-scroll" id="chat-scroll"></div>
+            <div class="chat-input-row">
+              <input class="input" id="chat-input" placeholder="Ask Nex about macros, workouts, recipes…">
+              <button class="btn btn-aqua" id="btn-chat-send"><i data-lucide="send"></i></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="site-foot">NexForm — built for every body. <span class="muted">AI estimates are guidance, not medical advice.</span></footer>
+  </div>
+
+  <!-- ============ MODALS ============ -->
+  <div class="modal-overlay" id="modal-portion">
+    <div class="modal">
+      <h3 id="mp-title">Dish</h3>
+      <p class="sub" id="mp-desc"></p>
+      <div class="field"><label>Portion</label>
+        <select class="input" id="mp-portion">
+          <option value="0.5">0.5× — Half</option><option value="1" selected>1× — Regular</option>
+          <option value="1.5">1.5× — Large</option><option value="2">2× — Double</option>
+        </select>
+      </div>
+      <div class="ai-result" id="mp-preview"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-close="modal-portion">Cancel</button>
+        <button class="btn btn-volt" id="mp-confirm">Add to today</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-set">
+    <div class="modal">
+      <h3 id="ms-title">Log set</h3>
+      <p class="sub">We'll send your body data + this set to the AI for an accurate burn estimate.</p>
+      <div class="onboard-grid">
+        <div class="field"><label>Sets</label><input class="input" type="number" id="ms-sets" value="4" min="1" max="20"></div>
+        <div class="field"><label>Reps</label><input class="input" type="number" id="ms-reps" value="8" min="1" max="100"></div>
+        <div class="field"><label>Weight (kg)</label><input class="input" type="number" step="0.5" id="ms-weight" value="60" min="0" max="500"></div>
+        <div class="field"><label>Rest (sec)</label><input class="input" type="number" id="ms-rest" value="90" min="10" max="600"></div>
+      </div>
+      <div id="ms-status" class="small mt" style="color:var(--aqua-ink);font-weight:700;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-close="modal-set">Cancel</button>
+        <button class="btn btn-aqua" id="ms-confirm"><i data-lucide="flame"></i> Save set & estimate burn</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-exercise">
+    <div class="modal">
+      <h3 id="me-title">Add / replace exercise</h3>
+      <p class="sub" id="me-sub">Customize any day. Changes are saved to your profile.</p>
+      <div class="field"><label>Exercise name</label><input class="input" id="me-name" placeholder="e.g. Incline dumbbell press"></div>
+      <div class="onboard-grid mt">
+        <div class="field"><label>Target</label><input class="input" id="me-target" placeholder="3 × 8-10 reps"></div>
+        <div class="field"><label>Rest</label><input class="input" id="me-rest" placeholder="90s"></div>
+      </div>
+      <div class="field mt"><label>Replaces (optional)</label><select class="input" id="me-replace"><option value="-1">— Add as new —</option></select></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-close="modal-exercise">Cancel</button>
+        <button class="btn btn-volt" id="me-confirm">Save exercise</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-profile">
+    <div class="modal">
+      <h3>Your profile</h3>
+      <p class="sub">Update your details anytime — targets recalculate instantly.</p>
+      <div class="onboard-grid">
+        <div class="field"><label>Display name</label><input class="input" id="pf-name"></div>
+        <div class="field"><label>Age</label><input class="input" type="number" id="pf-age"></div>
+        <div class="field"><label>Sex</label><select class="input" id="pf-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div class="field"><label>Height (cm)</label><input class="input" type="number" id="pf-height"></div>
+        <div class="field"><label>Weight (kg)</label><input class="input" type="number" step="0.1" id="pf-weight"></div>
+        <div class="field"><label>Target (kg)</label><input class="input" type="number" step="0.1" id="pf-target"></div>
+        <div class="field"><label>Body fat %</label><input class="input" type="number" step="0.1" id="pf-bodyfat"></div>
+        <div class="field"><label>Activity</label>
+          <select class="input" id="pf-activity"><option value="1.2">Sedentary</option><option value="1.375">Light</option><option value="1.55">Moderate</option><option value="1.725">Very active</option><option value="1.9">Athlete</option></select>
+        </div>
+        <div class="field"><label>Goal</label><select class="input" id="pf-goal"><option value="cut">Fat loss</option><option value="recomp">Recomp</option><option value="bulk">Muscle gain</option><option value="maintain">Maintain</option></select></div>
+        <div class="field"><label>Diet preference</label><input class="input" id="pf-diet"></div>
+      </div>
+      <div class="acct-row">
+        <div class="acct-label">Account ID</div>
+        <code class="acct-id" id="pf-acctid">—</code>
+        <button class="btn btn-ghost btn-sm" id="pf-copyid" type="button"><i data-lucide="copy"></i> Copy</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="pf-signout"><i data-lucide="log-out"></i> Sign out</button>
+        <button class="btn btn-volt" id="pf-save">Save profile</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-stack"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/canvas-bg.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/nutrition.js"></script>
+  <script src="js/exercise.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
